@@ -2,7 +2,7 @@ FROM ruby:2.7.1-alpine
 
 
 RUN apk update && apk upgrade && \
-    apk add --no-cache make g++ git postgresql-dev
+    apk add --no-cache make g++ git
     
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app

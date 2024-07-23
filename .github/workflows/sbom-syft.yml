@@ -6,7 +6,7 @@ on:
     branches: ["main"]
 
 jobs:
-  SYFT-SBOM-upload:
+  image-build-SBOM-upload:
 
     runs-on: ubuntu-latest
     permissions:
@@ -22,7 +22,7 @@ jobs:
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: simple_go_api # you will give this a more relevant name
+        images: sbom-ruby # you will give this a more relevant name
     - name: Build image
       uses: docker/build-push-action@v6
       with:
@@ -32,7 +32,7 @@ jobs:
 
     - name: Generate SBOM # using syft as best tool for image level SBOMs
       run: |
-        docker load --input /tmp/simple_go_api.tar
+        docker load --input /tmp/sbom-ruby.tar
         curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /$RUNNER_TEMP
         chmod +x $RUNNER_TEMP/syft
         $RUNNER_TEMP/syft sbom-ruby:latest -o spdx-json@2.2 | jq . > /tmp/spdx.json

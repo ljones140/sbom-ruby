@@ -1,4 +1,4 @@
-name: SYFT ACTION UPLOAD
+name: Build Image Upload SBOM
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
     branches: ["main"]
 
 jobs:
-  SYFT-ACTION-SBOM-upload:
+  SYFT-SBOM-upload:
 
     runs-on: ubuntu-latest
     permissions:
@@ -22,15 +22,27 @@ jobs:
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ${{ env.IMAGE_NAME }}
-    - name: Build service
+        images: simple_go_api # you will give this a more relevant name
+    - name: Build image
       uses: docker/build-push-action@v6
       with:
-        push: false
+        tags: sbom-ruby:latest
+        outputs: type=docker,dest=/tmp/sbom-ruby.tar
+        push: false # not publishing image but you probably will want to
 
-    - name: Generate SBOM
-      uses: anchore/sbom-action@v0
+    - name: Generate SBOM # using syft as best tool for image level SBOMs
+      run: |
+        docker load --input /tmp/simple_go_api.tar
+        curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /$RUNNER_TEMP
+        chmod +x $RUNNER_TEMP/syft
+        $RUNNER_TEMP/syft sbom-ruby:latest -o spdx-json@2.2 | jq . > /tmp/spdx.json
+    - name: Upload SBOM artifact
+      uses: actions/upload-artifact@v4
       with:
-        image: ./${{ env.IMAGE_NAME }}
-        dependency-snapshot: true
-        upload-artifact: false
+        name: sbom
+        path: /tmp/spdx.json
+    - name: upload SBOM Dependancy Snapshot
+      uses: advanced-security/spdx-dependency-submission-action@v0.1.1
+      with:
+        filePath: /tmp/
+        filePattern: spdx.json

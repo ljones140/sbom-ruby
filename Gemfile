@@ -6,4 +6,5 @@ gem "puma", "~> 6.4"
 
 group :development, :test do
   gem 'minitest', '5.14.4'
+  gem 'rubocop', '1.75.5'
 end
